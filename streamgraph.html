@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+
+<!--
+Barbara Csarman and Fabian Ehrentraud 2011
+-->
+
+<html lang="en">
+	<head>
+		<title>Streamgraph with html5 &lt;canvas&gt;</title>
+		<link rel="stylesheet" type="text/css" href="streamgraph.css"/>
+		<script src="streamgraph.js" type="text/javascript" charset="utf-8"></script>
+		<script src="fire.js" type="text/javascript" charset="utf-8"></script>
+		<meta charset="utf-8"/>
+		<meta name="description" content="Implementation of a Streamgraph with html5 canvas."/>
+		<meta name="keywords" content="Streamgraph, ThemeRiver, html5, canvas, javascript"/>
+		<meta name="author" lang="de" content="Barbara Csarman; Fabian Ehrentraud"/>
+	</head>
+	
+	<body>
+	
+		<header> <h1>Streamgraph<span class="smallheading">with html5 &lt;canvas&gt;</span></h1></header>
+		<div id="info"> <p> Welcome to the Streamgraph Demo! </p> </div>
+		
+		<div id="content">
+			<div id="streamgraph_container" class="hidden_start">
+			<h2>Calculated Streamgraph <span class="subheading">Use mouse to show labels &amp; zoom</span></h2>
+				<div id="streamgraph_controls">
+				<form name="controls">
+					<div class="control_element">
+						<p><button type="button" name="b_loaddata_random">Random data</button></p>
+						<p><button type="button" name="b_loaddata_xml" value="streamgraph_inskriptionen.xml">TISS Study Data</button></p>
+					</div>
+															
+					<div class="control_element">
+						<label>
+							<p>Line Smoothing:</p>
+							<p><input type="range" id="r_linesmooth" min="0" max="1" value="0.35" step="0.05"></p>
+						</label>
+					</div>
+				
+					<div class="control_element">
+						<p><label><input type="radio" name="c_baseline" value="straight"> Stacked Graph</label></p>
+						<p><label><input type="radio" name="c_baseline" value="middle"> Middle Baseline</label></p>
+						<p><label><input type="radio" name="c_baseline" value="wiggle" checked="checked"> Wiggled Reducing BL</label></p>
+						<p><label><input type="radio" name="c_baseline" value="weighted"> Weighted Wiggle (broken)</label></p>
+					</div>
+				
+					<div class="control_element">
+						<p><label><input type="radio" name="c_order" value="none"> Layers Unordered</label></p>
+						<p><label><input type="radio" name="c_order" value="outsideup"> Stack Up Onset</label></p>
+						<p><label><input type="radio" name="c_order" value="outsidedown"> Stack Down Onset</label></p>
+						<p><label><input type="radio" name="c_order" value="outsidesum" checked="checked"> Balanced Onset</label></p>
+					</div>
+				
+					<div class="control_element">
+						<p><label><input type="radio" name="c_colormode" value="hue" checked="checked"> One Hue</label></p>
+						<p><label><input type="radio" name="c_colormode" value="bonus"> One Hue Bonus</label></p>
+						<p><label><input type="radio" name="c_colormode" value="random"> Candy Man</label></p>
+						<p><label><input type="radio" name="c_colormode" value="nice"> Picture Color Picker</label></p>
+					</div>
+					
+					<div class="control_element">
+						<div id="col_hue">
+							<label>
+								<p>Color Hue:</p>
+								<p><input type="range" id="r_hue" min="0" max="360" value="75" step="1"></p>
+							</label>
+						</div>
+						<div id="col_hue_bonus" style="display:none">
+							<label>
+								<p>Color Hue Bonus Feature:</p>
+								<p><input type="range" id="r_bhue" min="0" max="360" value="75" step="1"></p>
+							</label>
+						</div>
+						<div id="col_candy" style="display:none">
+							<label>
+								<p>Candyman Craziness:</p>
+								<p><input type="range" id="r_candy" in="0" max="1" value="0" step="0.01"></p>
+							</label>
+						</div>
+					</div>
+				</form>
+				</div>		
+				
+				<div>
+					<figure>
+						<canvas id="streamgraph" width="900" height="370">Your browser does not support the canvas element.</canvas>	
+						<figcaption id="streamgraph_caption">This is a wonderful Streamgraph.</figcaption>
+					</figure>	
+				</div>
+				
+
+			</div>
+			
+			<div id="streamgraph_explanation">
+			
+				<h2>Streamgraph Implementation Overview</h2>
+				<p>
+					This site demonstrates our implementation of Streamgraphs according to Lee Byron's <a href="http://www.leebyron.com/else/streamgraph/">Paper</a> with a focus on showing the visual impact of different calculation aspects.
+				</p>
+				<p>
+					You can also <a href="streamgraph.js">have a look at the source code</a> which is (hopefully) well documented.
+				</p>
+				<p>
+					<strong>Note:</strong> Firefox 4 and Internet Explorer 9 do not yet support html5 sliders. For Firefox there exists a <a href="http://userscripts.org/scripts/show/101214">Greasemonkey Extension</a> that helps you out. In Internet Explorer 9 there does not exist a workaround known to us, but you can enter a value in the field and click somewhere outside to update the value.
+				</p>
+				<p>
+					<strong>Note 2:</strong> Due to security reasons most browsers need this page to be loaded from a real web server and not a local file. The two function calls send() (on the XMLHttpRequest object) and getImageData() will lead to an error then.
+				</p>
+				<h3>Achievements</h3>
+				<p>
+					We have implemented graph drawing by using the brand new html5 &lt;canvas&gt; element in conjunction with JavaScript. We decided <strong>against</strong> using any framework as we are cool hackers and tried to take our first steps with these technologies in a bottom up approach.
+				</p>
+				<div>
+					<p>
+						Main aspects covered by our implementation are:
+					</p>
+					<ul>
+						<li>Draw a Streamgraph using spline-interpolated curves</li>
+						<li>Spline Interpolation Smoothness is adjustable live</li>
+						<li>Various input data possibilities
+							<ul>
+								<li>Input data can be supplied by an XML file</li>
+								<li>TISS statistics can be scraped with a Python script and saved as XML</li>
+								<li>TISS scraping could also be done live with a PHP script (disabled due to TISS problems)</li>
+								<li>Random data can be generated live</li>
+							</ul>
+						</li>
+						<li>A Streamgraph baseline can be calculated with different formulas
+							<ul>
+								<li>A straight baseline (which results in an ordinary stacked graph)</li>
+								<li>A simple function like used in the ThemeRiver application</li>
+								<li>The very efficient wiggle-reducing formula described in the paper</li>
+								<li>The more advanced weighted-wiggle-reducing formula described in the paper (which is not yet completely working)</li>
+							</ul>
+						</li>
+						<li>Different layer ordering possibilities</li>
+						<li>Different color schemes</li>
+						<li>An x-axis with named values extracted from the XML data</li>
+						<li>A legend with names and values of the currently hovered dataset plus a visual clue for the current x-value</li>
+						<li>Mouse wheel zooming</li>
+						<li>Cross-browser compatibility with Firefox, Chrome and Opera</li>
+						<li>A stunning fire effect, reducing the felt waiting time (of several microseconds) needed for calculating the Streamgraph</li>
+					</ul>
+				</div>
+				
+				<h3>Challenges</h3>
+				<p>
+					While developing the application, we had to overcome many smaller and also some stickier obstacles. 
+				</p>
+				<p>
+					One of the most challenging obstacles right in the beginning was to get going with canvas transforms to zoom and translate all screen elements (graph, legend, axis).
+				</p>
+				<p>
+					Browser compatibility has been a tricky part as well. Even without having to take care of Internet Explorer, the supported browsers still had different issues. For example, calculation of the mouse position is not the same in all of those. Another challenge was stopping event bubbling, which should be standardized by the W3C, but obviously is not.
+				</p>
+				<p>
+					
+				</p>
+				
+				<h3>Open Issues</h3>
+				<p>
+					Not everything worked out as expected, though. We put much effort in implementing also the more advanced weighted wiggle-reducing function, but we couldn't find the mathematical problem with our calculation. Another issue is the spline interpolation which leads to unwanted overshooting and results in slightly overlapping layers. The last open issue is that our implementation only supports equidistant x-values as input data.
+				</p>
+				
+				<h2>
+					Streamgraph Theoretical Overview
+				</h2>
+				<h3>
+					Stacked Graph
+				</h3>
+				<p>
+					A stacked graph allows to display a great amount of data in a combined view, whereas the user can discern the sum of a data set at each point as well as the constituent parts. There are two forms of stacked graphs: one for displaying one or more stationary properties and one for properties changing over the x-coordinate, in the most cases expressing share-variation in time.
+				</p>
+				<h3>
+					What the Heck is a Streamgraph? 
+				</h3>
+				<p>
+					A Streamgraph is an innovative form for changing the visualization of time-varying stacked graphs in order to make them visually more appealing for the masses. The difference to a conventional stacked graph is a non-linear x-coordinate - in the sense it not being a straight line - to make up for visually unpleasant spikes in the data. Other than that, guidelines for choosing the order of stacking, color choice and labeling exist to make Streamgraphs more appealing and easier to read for the audience. ThemeRiver is a previous approach for making stacked graphs more appealing which resulted in a massive positive echo of the masses and paved the way for the conception of Streamgraphs. 
+				</p>
+				<h3>
+					What is It Good For and What are Its Positive Impacts? 
+				</h3>
+				<p>
+					Streamgraphs look &quot;non-scientifically&quot; and provide an organic and engaging view which makes them appealing for mass audiences. Also, they are easily readable, at least regarding certain characteristics of the underlying data. Overall trends are as well discernible as details are, even for great amounts of data. A Streamgraph was used to display the listening history of last.fm users which could emotionally connect to the organic form. Another application was the Box Office Revenue graph made for the New York Times which showed interplay between box office hits and Oscar nominations.
+				</p>
+				<h3>
+					Negative Characteristics
+				</h3>
+				<p>
+					The varying baseline of a Streamgraph layout possibly makes the overall graph much harder to read. It also might not be suited for all kinds of given data due to certain statistical properties it highlights best.
+				</p>
+				
+				<h2>
+					Stacked Graph Design
+				</h2>
+				<h3>
+					Baseline
+				</h3>
+				<p>
+					The baseline (x-coordinate) needs to be calculated from the derivatives of the constituent functions by numeric integration. If only discrete data points are known, the functions need to be interpolated from these first. The result of these calculations should be a baseline which induces a smoother flow of the single layers, reducing wiggles and spikes.
+				</p>
+				<h3>
+					Silhouette
+				</h3>
+				<p>
+					The silhouette depends on the calculation of the baseline as well as the layer ordering. The goal is to minimize spikes of the overall graph. Another issue is to put focus on onset times of the single layers which are placed on the outsides of the whole graph - this goal might change depending on the statistics of the underlying data. Onset time is the earliest time a specific constituent function is not 0. 
+				</p>
+
+				<h2>
+					Legibility and Aesthetics
+				</h2>
+
+				<figure id="colorfig">
+					<canvas id="color" width="150" height="150">Your browser does not support the canvas element.</canvas>
+					<figcaption>Color field for LastFM Picture Color Picker</figcaption>
+				</figure>
+				
+				<p>
+					Several design goals are mentioned by the author to increase legibility and aesthetics of the produced graph. 
+				</p>
+				<h3>
+					Color
+				</h3>
+				<p>
+					One of those mentioned is color, which mainly serves two purposes. Firstly, color should be chosen carefully as the ability to discern layers depends heavily on the colors and color differences between them. Secondly, color serves the purpose of communicating the temporal extension of a layer by giving time series with a later onset a warmer color.
+				</p>
+				
+				<h3>
+					Ordering of Layers
+				</h3>
+				<p>
+					The order of the single layers can improve the overall look of a graph greatly as it has a big impact on how spikes and wiggles of a layer effect neighboring ones. For example a spike in the outermost layer will have the least effect on the other ones. The interplay of communicative concerns and aesthetics is the most important issue in choosing an order. In NameVoyage, which shows the most popular baby names over time, the layers are simply sorted alphabetically. Ordering the layers following the onset times would lead to a striped look where the overall shape is drifting vertically away. As both methods have their downsides, the layers are ordered inside-out in Streamgraph - the later the onset time of a time series, the further outside it is being placed - which gives best results. This doesn't only put focus on the onset time but also leaves areas underlying the greatest change on the outside where they disturb other layers the least.
+				</p>
+				<h3>
+					Layer Labeling
+				</h3>
+				<p>
+					Depending on the size of the graph it has to be decided how to label the different layers. If only few sets of data or categories are used, like in NameVoyager, a simple legend will suffice. For more complex color schemes, a place for the label and a fitting font size needs to be found. Brute force calculations have been used with Streamgraph, but they often take very long to calculate, rendering them useless for generating them on the fly.
+				</p>
+				
+			</div>
+			
+		</div>
+		
+		<footer>
+			<p>
+				Made by Barbara Csarman and Fabian Ehrentraud for the course &quot;Informationsvisualisierung&quot; on the University of Technology Vienna.
+			</p>
+			<p>
+				Needs Firefox 3.6, Opera 11 or Chrome 10.
+			</p>
+		</footer>
+	
+	</body>
+</html>

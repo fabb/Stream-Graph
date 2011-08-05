@@ -1,0 +1,214 @@
+@charset "utf-8";
+
+/* Barbara Csarman and Fabian Ehrentraud 2011 */
+
+body {
+	font-family: arial narrow, helvetica, sans-serif;
+	font-size: 80%;
+	/*font-size: 90%;*/
+	color: black;
+	/*color: #4C4C4C;*/
+	background-color: #FFFFCC; /** #D9F970; **/
+	/*background-color: #FFB;*/
+	padding: 0;
+	width: 80%;
+	/*min-width: 80em;*/
+	margin: 1em auto;
+}
+
+header, nav, article, section, aside, footer, figcaption {
+	display: block; /*workaround for Firefox 3.6 and Opera 11*/
+}
+
+p {
+	line-height: 1.5em;
+	padding: 0.1em;
+	border: none;
+	margin: 0.2em;
+}
+
+p:first-letter {
+	font-size: 130%;
+}
+
+h1 {
+	color: #4C6700;
+	border-bottom: 2px solid #4C6700;
+	font-size: 2em;
+	margin: 0;
+	/*margin-bottom: 0.5em;*/
+	padding: 0.25em;
+	font-style: italic;
+	text-align: right;
+	letter-spacing: 0.05em;
+	text-shadow: 0.07em 0.07em 0.2em #4C6700;
+}
+
+h2 {
+	color: black;
+	/*background-color: #99FF99;*/
+	font-size: 1.3em;
+	font-style: italic;
+	margin: 0.5em 0 0.4em 0;
+	padding: 0.1em;
+	padding-left: 0.2em;
+}
+
+#streamgraph_container h2 {
+	color: #4C6700;
+}
+
+#streamgraph_explanation h2:nth-of-type(1n+2) {
+	border-top: 1px solid rgba(76,103,0, 0.7);
+	padding-top: 0.3em;
+}
+
+h3 {
+	color: black;
+	/*background-color: #99FF99;*/
+	font-size: 1.1em;
+	font-style: italic;
+	margin: 0.3em 0 0.3em 0;
+	padding: 0.1em;
+	padding-left: 0.2em;
+}
+
+a {
+	text-decoration: none;
+	/*color: #70C;*/
+	color: #00d;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+#info {
+	background-color: #DDD;
+	padding-left: 1em;
+	padding-right: 1em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+#content {
+	background-color: #D7F970;
+	padding-left: 1em;
+	padding-right: 1em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+#streamgraph {
+}
+
+#streamgraph_container {
+	text-align: center;
+}
+
+#streamgraph_container.hidden_start {
+	/*
+	transition: height ease-in-out 1s;
+	-o-transition: height ease-in-out 1s;
+    -moz-transition: height ease-in-out 1s;
+    -webkit-transition: height ease-in-out 1s;
+	height: 0;
+	*/
+	transition: max-height ease-in-out 2s;
+	-o-transition: max-height ease-in-out 2s;
+    -moz-transition: max-height ease-in-out 2s;
+    -webkit-transition: max-height ease-in-out 2s;
+	max-height: 0;
+	overflow: hidden;
+}
+#streamgraph_container.hidden_show {
+	/*
+	transition: height ease-in-out 1s;
+	-o-transition: height ease-in-out 1s;
+    -moz-transition: height ease-in-out 1s;
+    -webkit-transition: height ease-in-out 1s;
+	*/
+	/*height: auto;*/ /*this won't work for transitions*/
+	/*height: 430px;*/
+	transition: max-height ease-in-out 2s;
+	-o-transition: max-height ease-in-out 2s;
+    -moz-transition: max-height ease-in-out 2s;
+    -webkit-transition: max-height ease-in-out 2s;
+	max-height: 700px; /*set to a reasonable height > real height, but not too big to make the transition too fast*/
+	overflow: hidden;
+	overflow-x: auto; /* so when the browser window is not wide enough, display a horizontal scroll bar for getting the graph and the controls in view */
+	padding-bottom: 1em;
+	border-bottom: 1px dashed rgba(76,103,0, 0.7);
+	margin-bottom: 1em;
+}
+
+#streamgraph_explanation {
+	padding-bottom: 1em;
+}
+
+footer {
+	background-color: #DDD; /** #A7CE34; **/
+	padding-left: 1em;
+	padding-right: 1em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+#streamgraph_controls {
+  width: 900px;
+  margin: auto;
+}
+.control_element {
+  /*display: inline-block;
+  vertical-align: top;
+  text-align: left;*/
+  
+  display: table-cell;
+  text-align: left;
+  
+  /*float: left;
+  text-align: left;
+  width: 200px;
+  margin-right: 20px;*/
+}
+/*#header,*/ #info, #content, footer {
+	border-radius: 10px;
+	border: 1px solid #AAAAAA;
+	box-shadow: 2px 2px 2px #AAAAAA;
+}
+
+canvas {
+	background: white;
+	border: 0.1em #A7CE34 solid; 
+  margin-left: 30px;
+}
+
+figcaption {
+	font-style: italic;
+}
+
+#colorfig {
+	float: right;
+	margin: 0.5em;
+}
+#colorfig figcaption {
+	text-align: right;
+}
+
+
+.smallheading {
+	display: block;
+	font-size: 45%;
+	font-style: normal;
+}
+
+.subheading {
+	display: block;
+	font-size: 70%;
+	font-style: normal;
+}

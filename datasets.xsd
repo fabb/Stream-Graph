@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="datasets.xsd" 
+xmlns="datasets.xsd" elementFormDefault="qualified">
+  <xs:element name="datasets">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="title" type="xs:string" />
+        <xs:element name="x_axis" type="xs:string" />
+        <xs:element name="y_axis" type="xs:string" />
+        <xs:element name="dataset" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="title" type="xs:string" />
+              <xs:element name="point" maxOccurs="unbounded" >
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="x_value" type="xs:string" />
+                    <xs:element name="y_value" type="xs:integer" />
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>    
+  </xs:element>
+</xs:schema>
