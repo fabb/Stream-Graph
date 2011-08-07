@@ -26,9 +26,9 @@ function inits(){
 		'',
 		true,
 		document.getElementById("streamgraph"),
-		document.getElementById("streamgraph_caption"),
+		captionCallback,
 		document.getElementById("color"),
-		document.getElementById('info'),
+		statusCallback,
 		function(){if (document.getElementById("streamgraph_container")) document.getElementById("streamgraph_container").setAttribute("class","hidden_show");}
 	);
 }
@@ -218,6 +218,41 @@ function colorWebsite(hue){
 }
 
 
+// prints status message to an info element
+function statusCallback(oStreamGraph, state, xmlurl){
+	statusElement = document.getElementById('info');
+	if (statusElement){
+		switch (state) {
+		case oStreamGraph.statusEnum.LOADING_RANDOM:
+			statusElement.innerHTML = "<p data-fire='onfire'>Datasource: random data</p>";
+			break;
+		case oStreamGraph.statusEnum.LOADING_XML:
+			statusElement.innerHTML = "<p data-fire='onfire'>Datasource: " + xmlurl + "</p>";
+			break;
+		case oStreamGraph.statusEnum.CALCULATING:
+			statusElement.innerHTML = "<p data-fire='onfire'>Data loaded, calculating Streamgraph...</p>";
+			break;
+		case oStreamGraph.statusEnum.DRAWING:
+			statusElement.innerHTML = "<p data-fire='onfire'>Drawing Streamgraph...</p>";
+			break;
+		case oStreamGraph.statusEnum.READY_RANDOM:
+			statusElement.innerHTML = "<p>We present to you: Streamgraph with data from random source</p>";
+			break;
+		case oStreamGraph.statusEnum.READY_XML:
+			statusElement.innerHTML = "<p>We present to you: Streamgraph with data from <a href='" + xmlurl + "'>" + xmlurl + "</a></p>";
+			break;
+		default:
+			;
+		}
+	}
+}
+
+// sets the caption of the graph
+function captionCallback(oStreamGraph, graph_title, datasetCount){
+	if (document.getElementById("streamgraph_caption")) document.getElementById("streamgraph_caption").innerHTML = graph_title + " - " + datasetCount + " datasets";
+}
+
+
 
 /*****************************************************************************************************************************/
 /*** StreamGraph Object
@@ -231,7 +266,9 @@ function StreamGraph() { // StreamGraph constructor
 /*****************************************************************************************************************************/
 
 var streamgraph_canvas, col_canvas, streamgraph_context, col_context;
-var streamgraph_caption, statusElement;
+var streamgraph_caption;
+var caption_cb, status_cb;
+var statusEnum = {LOADING_RANDOM:0,LOADING_XML:1,CALCULATING:2,DRAWING:3,READY_RANDOM:4,READY_XML:5};
 var datasets_orig, dataset_titles_orig, datasets, dataset_titles, stacked, stacked01;
 var mousex = -1, mousey = -1, mousexhover = -1; //mousexhover => x_index where the mouse currently hovers, -1 if none
 var mouseunzoomedgraphx, mouseunzoomedgraphy, mousegraphx, mousegraphy;
@@ -256,6 +293,7 @@ var smoothing = 0.35;
 this.colorModeEnum = colorModeEnum;
 this.orderModeEnum = orderModeEnum;
 this.baselineCalculationEnum = baselineCalculationEnum;
+this.statusEnum = statusEnum;
 
 
 /*****************************************************************************************************************************/
@@ -263,12 +301,12 @@ this.baselineCalculationEnum = baselineCalculationEnum;
 /*****************************************************************************************************************************/
 
 // randomdata=true: url is being ignored	
-this.init_streamgraph = function(url, randomdata, sg_canvas, sg_caption, c_canvas, statusEl, finished_callback) {
+this.init_streamgraph = function(url, randomdata, sg_canvas, caption_callback, c_canvas, status_callback, finished_callback) {
 	
 	streamgraph_canvas = sg_canvas;
-	streamgraph_caption = sg_caption;
+	caption_cb = caption_callback;
 	col_canvas = c_canvas;
-	statusElement = statusEl;
+	status_cb = status_callback;
 	
 	if(col_canvas && col_canvas.getContext){ //image
 		col_context = col_canvas.getContext('2d');
@@ -301,10 +339,10 @@ this.init_streamgraph = function(url, randomdata, sg_canvas, sg_caption, c_canva
 // when randomdata is false, load from given url
 this.loadGraph = function(xmlurl, randomdata){
 	if(randomdata){
-		if (statusElement) statusElement.innerHTML = "<p data-fire='onfire'>Datasource: random data</p>";
+		if (status_cb) status_cb(this,statusEnum.LOADING_RANDOM);
 		datasets = makeRandomData(numCurves, lengthCurves);
 	}else{
-		if (statusElement) statusElement.innerHTML = "<p data-fire='onfire'>Datasource: " + xmlurl + "</p>";
+		if (status_cb) status_cb(this,statusEnum.LOADING_XML,xmlurl);
 		datasets = getDatapoints(xmlurl);
 	}
 
@@ -315,21 +353,21 @@ this.loadGraph = function(xmlurl, randomdata){
 	scale = 1;
 	originx = originy = 0;
 
-	if (statusElement) statusElement.innerHTML = "<p data-fire='onfire'>Data loaded, calculating Streamgraph...</p>";
+	if (status_cb) status_cb(this,statusEnum.CALCULATING);
 
 	recalculate();
 
-	if (statusElement) statusElement.innerHTML = "<p data-fire='onfire'>Drawing Streamgraph...</p>";
+	if (status_cb) status_cb(this,statusEnum.DRAWING);
 
 	draw_streamgraph(); //first call before periodicity kicks in
 
 	if(randomdata){
-		if (statusElement) statusElement.innerHTML = "<p>We present to you: Streamgraph with data from random source</p>";
+		if (status_cb) status_cb(this,statusEnum.READY_RANDOM);
 	}else{
-		if (statusElement) statusElement.innerHTML = "<p>We present to you: Streamgraph with data from <a href='" + xmlurl + "'>" + xmlurl + "</a></p>";
+		if (status_cb) status_cb(this,statusEnum.READY_XML,xmlurl);
 	}
 
-	if (streamgraph_caption) streamgraph_caption.innerHTML = graph_title + " - " + datasetCount + " datasets";
+	if (caption_cb) caption_cb(this,graph_title,datasetCount);
 };
 
 // recalculates ordering, baseline and stacked layers according to set global values
