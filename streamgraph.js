@@ -1,5 +1,14 @@
 // Barbara Csarman and Fabian Ehrentraud, 2011
 
+//TODO
+// make the graph data an object
+// use JSON intead of XML: http://www.json.org/
+
+
+var myStreamGraph = new StreamGraph();
+
+
+function StreamGraph() { // StreamGraph constructor
 
 /*****************************************************************************************************************************/
 /*** GLOBAL DECLARATIONS
@@ -25,7 +34,7 @@ var orderModeEnum = {NONE:0,OUTSIDEUP:1,OUTSIDEDOWN:2,OUTSIDESUM:3}, orderMode =
 var baselineCalculationEnum = {STACKED:0,MIDDLE:1,WIGGLE:2,WEIGHTEDWIGGLE:3}, baselineCalculation = baselineCalculationEnum.WIGGLE;
 var smoothing = 0.35;
 
-//var newdataset = new Object; //in future versions
+//var graph_data = new Object; //in future versions
 
 
 /*****************************************************************************************************************************/
@@ -36,7 +45,7 @@ var smoothing = 0.35;
 window.addEventListener("load", inits, false);
 
 function inits(){
-	if (document.controls) document.controls.reset();
+	if (document.forms["controls"]) document.forms["controls"].reset();
 	init_fire();
 	init_controls();
 	init_streamgraph('', true, document.getElementById('info'));
@@ -1213,3 +1222,6 @@ function stackCurves(curveArray) {
 	}
 	return stackedArray;
 }
+
+
+};
