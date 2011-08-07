@@ -22,57 +22,200 @@ function inits(){
 	(document.forms["controls"]||{}).reset();
 	init_fire();
 	init_controls(myStreamGraph);
-	myStreamGraph.init_streamgraph('', true, document.getElementById("streamgraph"), document.getElementById("color"), document.getElementById('info'));
+	myStreamGraph.init_streamgraph(
+		'',
+		true,
+		document.getElementById("streamgraph"),
+		document.getElementById("streamgraph_caption"),
+		document.getElementById("color"),
+		document.getElementById('info'),
+		function(){if (document.getElementById("streamgraph_container")) document.getElementById("streamgraph_container").setAttribute("class","hidden_show");}
+	);
 }
 
+
+/*****************************************************************************************************************************/
+/*** Controls on Frontend
+/*****************************************************************************************************************************/
 
 // initializes control elements
 // not done in html code to separate code and content even more
 function init_controls(oStreamGraph) {	
-	var random_handler = function(e){oStreamGraph.loadGraph('', document.getElementById('info'), true);}
+	var random_handler = function(e){oStreamGraph.loadGraph('', true);}
 	var buttons = document.getElementsByName("b_loaddata_random");
 	for(var i = buttons.length; i--; ) {
 		buttons[i].addEventListener("click", random_handler, false);
 	}
 	
-	var xml_handler = function(e){oStreamGraph.loadGraph(e.target.value, document.getElementById('info'), false);}
+	var xml_handler = function(e){oStreamGraph.loadGraph(e.target.value, false);}
 	var buttons = document.getElementsByName("b_loaddata_xml");
 	for(var i = buttons.length; i--; ) {
 		buttons[i].addEventListener("click", xml_handler, false);
 	}
 	
 	var linesmooth = document.getElementById("r_linesmooth");
-	if (linesmooth) linesmooth.addEventListener("change", oStreamGraph.smoothingPicker, false);
+	if (linesmooth) linesmooth.addEventListener("change", function(e){smoothingPicker(e,oStreamGraph)}, false);
 
 	var radios = document.getElementsByName("c_baseline");
 	for(var i = radios.length; i--; ) {
-		radios[i].addEventListener("click", oStreamGraph.baselinePicker, false);
+		radios[i].addEventListener("click", function(e){baselinePicker(e,oStreamGraph)}, false);
 	}
 	
 	var radios = document.getElementsByName("c_order");
 	for(var i = radios.length; i--; ) {
-		radios[i].addEventListener("click", oStreamGraph.orderPicker, false);
+		radios[i].addEventListener("click", function(e){orderPicker(e,oStreamGraph)}, false);
 	}
 	
 	var radios = document.getElementsByName("c_colormode");
 	for(var i = radios.length; i--; ) {
-		radios[i].addEventListener("click", oStreamGraph.colorPicker, false);
+		radios[i].addEventListener("click", function(e){colorPicker(e,oStreamGraph)}, false);
 	}
 
-	var hue_handler = function(e){oStreamGraph.changeHue(e.target.value,false);}
+	var hue_handler = function(e){huePicker(e,false,oStreamGraph);}
 	var hue = document.getElementById("r_hue");
 	if (hue) hue.addEventListener("change", hue_handler, false);
 
-	var huebonus_handler = function(e){oStreamGraph.changeHue(e.target.value,true);}
+	var huebonus_handler = function(e){huePicker(e,true,oStreamGraph);}
 	var bhue = document.getElementById("r_bhue");
 	if (bhue) bhue.addEventListener("change", huebonus_handler, false);
-
-	var candy_handler = function(e){oStreamGraph.changeCandy(e.target.value);}
+	
 	var candy = document.getElementById("r_candy");
-	if (candy) candy.addEventListener("change", candy_handler, false);
+	if (candy) candy.addEventListener("change", function(e){candyPicker(e,oStreamGraph)}, false);
+}
+
+// called when radiobutton on front end is selected
+function orderPicker(e,oStreamGraph) {
+	var orderMode;
+	
+	switch (e.target.value) {
+	case 'outsidesum':
+		orderMode = oStreamGraph.orderModeEnum.OUTSIDESUM;
+		break;
+	case 'outsideup':
+		orderMode = oStreamGraph.orderModeEnum.OUTSIDEUP;
+		break;
+	case 'outsidedown':
+		orderMode = oStreamGraph.orderModeEnum.OUTSIDEDOWN;
+		break;
+	case 'none':
+		orderMode = oStreamGraph.orderModeEnum.NONE;
+		break;
+	default:
+		orderMode = oStreamGraph.orderModeEnum.NONE;
+	}
+	
+	oStreamGraph.setOrder(orderMode);
+}
+
+// called when radiobutton on front end is selected
+function baselinePicker(e,oStreamGraph) {
+	var baselineCalculation;
+	
+	switch (e.target.value) {
+	case 'straight':
+		baselineCalculation = oStreamGraph.baselineCalculationEnum.STACKED;
+		break;
+	case 'middle':
+		baselineCalculation = oStreamGraph.baselineCalculationEnum.MIDDLE;
+		break;
+	case 'wiggle':
+		baselineCalculation = oStreamGraph.baselineCalculationEnum.WIGGLE;
+		break;
+	case 'weighted':
+		baselineCalculation = oStreamGraph.baselineCalculationEnum.WEIGHTEDWIGGLE;
+		break;
+	default:
+		baselineCalculation = oStreamGraph.baselineCalculationEnum.WIGGLE;
+	}
+
+	oStreamGraph.setBaseline(baselineCalculation);
+}
+
+// changes the smoothness of the interpolation between points, range [0,1]
+function smoothingPicker(e,oStreamGraph){
+	oStreamGraph.setSmoothing(e.target.value);
+}
+
+// called when radio button on front end has changed
+function colorPicker(e,oStreamGraph){
+	var colorMode;
+	
+	var col_hue_bonus = document.getElementById('col_hue_bonus');
+	var col_hue = document.getElementById('col_hue');
+	var col_candy = document.getElementById('col_candy');
+	if (col_hue_bonus) col_hue_bonus.style.display = "none";
+	if (col_hue) col_hue.style.display = "none";
+	if (col_candy) col_candy.style.display = "none";
+
+	switch (e.target.value) {
+	case 'random':
+		if (col_candy) col_candy.style.display = "block";
+		colorMode = oStreamGraph.colorModeEnum.RANDOM;
+		break;
+	case 'hue':
+		if (col_hue) col_hue.style.display = "block";
+		colorMode = oStreamGraph.colorModeEnum.HUE;
+		break;
+	case 'bonus':
+		if (col_hue_bonus) col_hue_bonus.style.display = "block";
+		colorMode = oStreamGraph.colorModeEnum.HUEBONUS;
+		var bhue = document.getElementById("r_bhue");
+		if (bhue) colorWebsite(bhue.value);
+		break;
+	case 'nice':
+		colorMode = oStreamGraph.colorModeEnum.PICTURE;
+		break;
+	default:
+		if (col_hue) col_hue.style.display = "block";
+		colorMode = oStreamGraph.colorModeEnum.HUE;
+	}
+	
+	oStreamGraph.setColorMode(colorMode);
+}
+
+function huePicker(e, bonus, oStreamGraph){
+	var hue = e.target.value;
+	
+	oStreamGraph.setHue(hue);
+	
+	if(bonus){
+		colorWebsite(hue);
+
+		if (document.getElementById('col_hue') && document.getElementById('col_hue').querySelector('input')) {
+			document.getElementById('col_hue').querySelector('input').value = hue;
+		}
+	}else{
+		if (document.getElementById('col_hue_bonus') && document.getElementById('col_hue_bonus').querySelector('input')) {
+			document.getElementById('col_hue_bonus').querySelector('input').value = hue;
+		}
+	}
+}
+
+function candyPicker(e, oStreamGraph){
+	oStreamGraph.changeCandy(e.target.value);
 }
 
 
+// colors the website in the given hue
+function colorWebsite(hue){
+	hue = hue < 0 ? 0 : hue > 360 ? 360 : hue;
+	
+	//bonus for coloring website
+	if (document.getElementById('content')) document.getElementById('content').style.backgroundColor = 'hsla(' + hue + ',92%,71%,1.0)';
+	if (document.querySelector('#streamgraph_container h2')) document.querySelector('#streamgraph_container h2').style.color = 'hsla(' + hue/*-24*/ + ',100%,20%,1.0)';
+	if (document.querySelector('#streamgraph_container.hidden_show')) document.querySelector('#streamgraph_container.hidden_show').style.borderBottomColor = 'hsla(' + hue/*-24*/ + ',100%,20%,0.7)';
+	if (document.querySelector('canvas')) document.querySelector('canvas').style.borderColor = 'hsla(' + hue/*-25*/ + ',61%,51%,1.0)';
+	if (document.querySelector('canvas#color')) document.querySelector('canvas#color').style.borderColor = 'hsla(' + hue/*-25*/ + ',61%,51%,1.0)';
+	if (document.querySelector('h1')){
+		document.querySelector('h1').style.color = 'hsla(' + hue/*-24*/ + ',100%,20%,1.0)';
+		document.querySelector('h1').style.borderBottomColor = 'hsla(' + hue/*-24*/ + ',100%,20%,1.0)';
+		document.querySelector('h1').style.textShadow = '0.07em 0.07em 0.2em hsla(' + hue/*-24*/ + ',100%,20%,1.0)';
+	}
+	//document.querySelector('#streamgraph_explanation h2:nth-of-type(1n+2)').style.borderTopColor = 'hsla(' + hue/*-24*/ + ',100%,20%,1.0)';
+
+	var elems = document.querySelectorAll('#streamgraph_explanation h2:nth-of-type(1n+2)');
+	for(var i=0; i<elems.length; i++){ elems[i].style.borderTopColor = 'hsla(' + hue/*-24*/ + ',100%,20%,1.0)'; }
+}
 
 
 
@@ -88,6 +231,7 @@ function StreamGraph() { // StreamGraph constructor
 /*****************************************************************************************************************************/
 
 var streamgraph_canvas, col_canvas, streamgraph_context, col_context;
+var streamgraph_caption, statusElement;
 var datasets_orig, dataset_titles_orig, datasets, dataset_titles, stacked, stacked01;
 var mousex = -1, mousey = -1, mousexhover = -1; //mousexhover => x_index where the mouse currently hovers, -1 if none
 var mouseunzoomedgraphx, mouseunzoomedgraphy, mousegraphx, mousegraphy;
@@ -101,7 +245,7 @@ var graph_title, graph_x_axis, graph_y_axis, x_labels, datasetCount;
 var layerhue = 75; //green in the beginning
 var candyCrazinessFactor = 0;
 var numCurves = 200, lengthCurves = 20; //for generating random data
-var colorModeEnum = {HUE:0,HUEBONUS:1,RANDOM:2,PICTURE:3}, colorMode = colorModeEnum.HUE;
+var colorModeEnum = {HUE:0,HUEBONUS:1,RANDOM:2,PICTURE:3}, colorMode = colorModeEnum.HUE;;
 var layerColors; //for each layer, one array with colors is included, the first is the normal layer color, the second the highlight color
 var orderModeEnum = {NONE:0,OUTSIDEUP:1,OUTSIDEDOWN:2,OUTSIDESUM:3}, orderMode = orderModeEnum.OUTSIDESUM;
 var baselineCalculationEnum = {STACKED:0,MIDDLE:1,WIGGLE:2,WEIGHTEDWIGGLE:3}, baselineCalculation = baselineCalculationEnum.WIGGLE;
@@ -109,16 +253,22 @@ var smoothing = 0.35;
 
 //var graph_data = new Object; //in future versions
 
+this.colorModeEnum = colorModeEnum;
+this.orderModeEnum = orderModeEnum;
+this.baselineCalculationEnum = baselineCalculationEnum;
+
 
 /*****************************************************************************************************************************/
 /*** INIT - called when page is reloaded or loaded first time, initializes all important values, calls drawing first time
 /*****************************************************************************************************************************/
 
 // randomdata=true: url is being ignored	
-this.init_streamgraph = function(url, randomdata, sg_canvas, c_canvas, statusElement) {
+this.init_streamgraph = function(url, randomdata, sg_canvas, sg_caption, c_canvas, statusEl, finished_callback) {
 	
 	streamgraph_canvas = sg_canvas;
+	streamgraph_caption = sg_caption;
 	col_canvas = c_canvas;
+	statusElement = statusEl;
 	
 	if(col_canvas && col_canvas.getContext){ //image
 		col_context = col_canvas.getContext('2d');
@@ -132,7 +282,7 @@ this.init_streamgraph = function(url, randomdata, sg_canvas, c_canvas, statusEle
 	if (streamgraph_canvas && streamgraph_canvas.getContext){
 		streamgraph_context = streamgraph_canvas.getContext('2d');
 
-		this.loadGraph(url, statusElement, randomdata);
+		this.loadGraph(url, randomdata);
 
 		if(interactive) {
 			setInterval(draw_streamgraph, 1000/framerate); //call draw function periodically with framerate
@@ -143,11 +293,13 @@ this.init_streamgraph = function(url, randomdata, sg_canvas, c_canvas, statusEle
 			streamgraph_canvas.addEventListener(mousescrollEvent, mouseWheel, false);
 		}
 	} else { alert("Your browser does not support the canvas element."); } //browser does not support canvas
+	
+	if(finished_callback) finished_callback();
 }
 
 // loads a new graph
 // when randomdata is false, load from given url
-this.loadGraph = function(xmlurl, statusElement, randomdata){
+this.loadGraph = function(xmlurl, randomdata){
 	if(randomdata){
 		if (statusElement) statusElement.innerHTML = "<p data-fire='onfire'>Datasource: random data</p>";
 		datasets = makeRandomData(numCurves, lengthCurves);
@@ -176,11 +328,8 @@ this.loadGraph = function(xmlurl, statusElement, randomdata){
 	}else{
 		if (statusElement) statusElement.innerHTML = "<p>We present to you: Streamgraph with data from <a href='" + xmlurl + "'>" + xmlurl + "</a></p>";
 	}
-	var streamgraph_caption = document.getElementById("streamgraph_caption");
+
 	if (streamgraph_caption) streamgraph_caption.innerHTML = graph_title + " - " + datasetCount + " datasets";
-	var streamgraph_container = document.getElementById("streamgraph_container");
-	if (streamgraph_container) streamgraph_container.setAttribute("class","hidden_show"); //only for first call as it's not hidden anymore
-	//TODO do that with a callback
 };
 
 // recalculates ordering, baseline and stacked layers according to set global values
@@ -322,25 +471,9 @@ function addRandomBump(x, o, d) {
 /*** ORDERING
 /*****************************************************************************************************************************/
 
-// called when radiobutton on front end is selected
-this.orderPicker = function(e) {
-	switch (e.target.value) {
-	case 'outsidesum':
-		orderMode = orderModeEnum.OUTSIDESUM;
-		break;
-	case 'outsideup':
-		orderMode = orderModeEnum.OUTSIDEUP;
-		break;
-	case 'outsidedown':
-		orderMode = orderModeEnum.OUTSIDEDOWN;
-		break;
-	case 'none':
-		orderMode = orderModeEnum.NONE;
-		break;
-	default:
-		orderMode = orderModeEnum.NONE;
-	}
-
+// setting the order mode to a different one
+this.setOrder = function(eOrderMode) {
+	orderMode = eOrderMode;
 	recalculate();
 };
 
@@ -361,7 +494,6 @@ function orderLayers(layers){ //order layers by globally selected method
 	default:
 		return layers.concat();
 	}
-
 }
 
 // SORT BY ONSET TIME
@@ -470,25 +602,9 @@ function orderOnset(curves,up) {
 /*** the sum is taken as empty and EQUAL TO 0.
 /*****************************************************************************************************************************/
 
-// called when radiobutton on front end is selected
-this.baselinePicker = function(e) {
-	switch (e.target.value) {
-	case 'straight':
-		baselineCalculation = baselineCalculationEnum.STACKED;
-		break;
-	case 'middle':
-		baselineCalculation = baselineCalculationEnum.MIDDLE;
-		break;
-	case 'wiggle':
-		baselineCalculation = baselineCalculationEnum.WIGGLE;
-		break;
-	case 'weighted':
-		baselineCalculation = baselineCalculationEnum.WEIGHTEDWIGGLE;
-		break;
-	default:
-		baselineCalculation = baselineCalculationEnum.WIGGLE;
-	}
-
+// setting the baseline to a different one
+this.setBaseline = function(eBaselineCalculation) {
+	baselineCalculation = eBaselineCalculation;
 	recalculate();
 };
 
@@ -1041,78 +1157,41 @@ function drawVerticalHighlight(canvas, context, xindex){
 /*****************************************************************************************************************************/
 
 // changes the smoothness of the interpolation between points, range [0,1]
-this.smoothingPicker = function(e){
-	smoothing = e.target.value;
+this.setSmoothing = function(smoothing01){
+	smoothing = smoothing01;
 	redrawFrame = true;
 };
 
-// called when radio button on front end has changed
-this.colorPicker = function(e){
-	var col_hue_bonus = document.getElementById('col_hue_bonus');
-	var col_hue = document.getElementById('col_hue');
-	var col_candy = document.getElementById('col_candy');
-	if (col_hue_bonus) col_hue_bonus.style.display = "none";
-	if (col_hue) col_hue.style.display = "none";
-	if (col_candy) col_candy.style.display = "none";
-
-	switch (e.target.value) {
-	case 'random':
-		if (col_candy) col_candy.style.display = "block";
-		colorMode = colorModeEnum.RANDOM;
+// set the color mode
+this.setColorMode = function(eColorMode){
+	colorMode = eColorMode;
+	switch (colorMode) {
+	case colorModeEnum.RANDOM:
 		calcLayerColors(stacked01);
 		redrawFrame = true;
 		break;
-	case 'hue':
-		if (col_hue) col_hue.style.display = "block";
-		colorMode = colorModeEnum.HUE;
-		myStreamGraph.changeHue(layerhue,false); //fix having to use myStreamGraph
+	case colorModeEnum.HUE:
+		setHue(layerhue);
 		break;
-	case 'bonus':
-		if (col_hue_bonus) col_hue_bonus.style.display = "block";
-		colorMode = colorModeEnum.HUEBONUS;
-		myStreamGraph.changeHue(layerhue,true); //fix having to use myStreamGraph
+	case colorModeEnum.HUEBONUS:
+		setHue(layerhue);
 		break;
-	case 'nice':
-		colorMode = colorModeEnum.PICTURE;
+	case colorModeEnum.PICTURE:
 		calcLayerColors(stacked01);
 		redrawFrame = true;
 		break;
 	default:
-		if (col_hue) col_hue.style.display = "block";
-		colorMode = colorModeEnum.HUE;
-		myStreamGraph.changeHue(layerhue,false); //fix having to use myStreamGraph
+		setHue(layerhue);
 	}
 };
 
 // changes the hue of the streamgraph in case it is drawn in single-color mode
-this.changeHue = function(hue,bonus) {
+var setHue = function(hue) {
 	layerhue = hue < 0 ? 0 : hue > 360 ? 360 : hue;
 	calcLayerColors(stacked01);
 	redrawFrame = true;
-
-	if(bonus){
-		if (document.getElementById('col_hue') && document.getElementById('col_hue').querySelector('input')) 
-			document.getElementById('col_hue').querySelector('input').value = hue;
-
-		//bonus for coloring website
-		if (document.getElementById('content')) document.getElementById('content').style.backgroundColor = 'hsla(' + layerhue + ',92%,71%,1.0)';
-		if (document.querySelector('#streamgraph_container h2')) document.querySelector('#streamgraph_container h2').style.color = 'hsla(' + layerhue/*-24*/ + ',100%,20%,1.0)';
-		if (document.querySelector('#streamgraph_container.hidden_show')) document.querySelector('#streamgraph_container.hidden_show').style.borderBottomColor = 'hsla(' + layerhue/*-24*/ + ',100%,20%,0.7)';
-		if (document.querySelector('canvas')) document.querySelector('canvas').style.borderColor = 'hsla(' + layerhue/*-25*/ + ',61%,51%,1.0)';
-		if (document.querySelector('canvas#color')) document.querySelector('canvas#color').style.borderColor = 'hsla(' + layerhue/*-25*/ + ',61%,51%,1.0)';
-		if (document.querySelector('h1')){
-			document.querySelector('h1').style.color = 'hsla(' + layerhue/*-24*/ + ',100%,20%,1.0)';
-			document.querySelector('h1').style.borderBottomColor = 'hsla(' + layerhue/*-24*/ + ',100%,20%,1.0)';
-			document.querySelector('h1').style.textShadow = '0.07em 0.07em 0.2em hsla(' + layerhue/*-24*/ + ',100%,20%,1.0)';
-		}
-		//document.querySelector('#streamgraph_explanation h2:nth-of-type(1n+2)').style.borderTopColor = 'hsla(' + layerhue/*-24*/ + ',100%,20%,1.0)';
-
-		var elems = document.querySelectorAll('#streamgraph_explanation h2:nth-of-type(1n+2)');
-		for(var i=0; i<elems.length; i++){ elems[i].style.borderTopColor = 'hsla(' + layerhue/*-24*/ + ',100%,20%,1.0)'; }
-	}else{
-		document.getElementById('col_hue_bonus').querySelector('input').value = hue;
-	}
 };
+this.setHue = setHue;
 
 // changes the hue of the streamgraph in case it is drawn in single-color mode
 this.changeCandy = function(candy) {
