@@ -473,6 +473,7 @@ function addRandomBump(x, o, d) {
 
 // setting the order mode to a different one
 this.setOrder = function(eOrderMode) {
+	eOrderMode = isValueInEnum(eOrderMode, orderModeEnum) ? eOrderMode : orderModeEnum.NONE;
 	orderMode = eOrderMode;
 	recalculate();
 };
@@ -604,6 +605,7 @@ function orderOnset(curves,up) {
 
 // setting the baseline to a different one
 this.setBaseline = function(eBaselineCalculation) {
+	eBaselineCalculation = isValueInEnum(eBaselineCalculation, baselineCalculationEnum) ? eBaselineCalculation : baselineCalculationEnum.WIGGLE;
 	baselineCalculation = eBaselineCalculation;
 	recalculate();
 };
@@ -1158,12 +1160,13 @@ function drawVerticalHighlight(canvas, context, xindex){
 
 // changes the smoothness of the interpolation between points, range [0,1]
 this.setSmoothing = function(smoothing01){
-	smoothing = smoothing01;
+	smoothing = smoothing01 < 0 ? 0 : smoothing01;
 	redrawFrame = true;
 };
 
 // set the color mode
 this.setColorMode = function(eColorMode){
+	eColorMode = isValueInEnum(eColorMode, colorModeEnum) ? eColorMode : colorModeEnum.HUE;
 	colorMode = eColorMode;
 	switch (colorMode) {
 	case colorModeEnum.RANDOM:
@@ -1316,6 +1319,17 @@ function stackCurves(curveArray) {
 		stackedArray.push(layertop);
 	}
 	return stackedArray;
+}
+
+
+//checks whether the given value is contained in the given enum
+function isValueInEnum(value, enum){
+	for (v in enum){
+		if(enum[v] == value){
+			return true;
+		}
+	}
+	return false;
 }
 
 
