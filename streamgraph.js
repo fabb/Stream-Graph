@@ -1361,9 +1361,9 @@ function stackCurves(curveArray) {
 
 
 //checks whether the given value is contained in the given enum
-function isValueInEnum(value, enum){
-	for (v in enum){
-		if(enum[v] == value){
+function isValueInEnum(value, enumForValue){
+	for (v in enumForValue){
+		if(enumForValue[v] == value){
 			return true;
 		}
 	}
